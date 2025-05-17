@@ -4,6 +4,14 @@ export interface Skill {
   xp: number; // 0, 1, or 2
 }
 
+export interface PrayerTokenStatus {
+  // We might have a few slots for prayer tokens. Let's assume 3 for now based on description.
+  // Each can be 'inactive', 'active', or 'unavailable' (if not yet earned)
+  slot1: "unavailable" | "inactive" | "active";
+  slot2: "unavailable" | "inactive" | "active";
+  slot3: "unavailable" | "inactive" | "active";
+}
+
 export interface CharacterSheetData {
   characterName: string;
   wounds: number;
@@ -18,6 +26,7 @@ export interface CharacterSheetData {
     gathering: Skill;
     crafting: Skill;
     cooking: Skill;
+    prayer: Skill;
   };
   resources: {
     fish: number;
@@ -42,6 +51,7 @@ export interface CharacterSheetData {
   };
   sideQuestsCompletedCount: number;
   lastUpdated?: string;
+  prayerTokens: PrayerTokenStatus;
 }
 
 export const SKILL_ORDER: (keyof CharacterSheetData["skills"])[] = [
@@ -53,6 +63,7 @@ export const SKILL_ORDER: (keyof CharacterSheetData["skills"])[] = [
   "gathering",
   "crafting",
   "cooking",
+  "prayer"
 ];
 
 export const RESOURCE_ORDER: (keyof CharacterSheetData["resources"])[] = [
@@ -86,6 +97,7 @@ export const getDefaultCharacterSheet = (
     gathering: { level: 1, xp: 0 },
     crafting: { level: 1, xp: 0 },
     cooking: { level: 1, xp: 1 }, // Default Skiller XP per FAQ
+    prayer: { level: 1, xp: 0 }
   },
   resources: {
     fish: 0,
@@ -107,6 +119,11 @@ export const getDefaultCharacterSheet = (
     have15Coins: false,
     oneOfEachResource: false,
     complete4SideQuests: false,
+  },
+  prayerTokens: { // Default state for prayer tokens
+    slot1: 'unavailable', // Initially unavailable, earned at level 1
+    slot2: 'unavailable', // Earned later
+    slot3: 'unavailable', // Earned later
   },
   sideQuestsCompletedCount: 0,
   lastUpdated: new Date().toISOString(),

@@ -113,6 +113,49 @@ const InteractiveSkillRow: React.FC<{
   );
 };
 
+// New component for a single Prayer Token
+const PrayerTokenDisplay: React.FC<{
+  status: "unavailable" | "inactive" | "active";
+  onClick: () => void;
+  slotNumber: number;
+}> = ({ status, onClick, slotNumber }) => {
+  let content = "🔒"; // Unavailable
+  let bgColor = "bg-gray-300";
+  let textColor = "text-gray-500";
+  let title = `Prayer Token Slot ${slotNumber} - Unavailable`;
+
+  if (status === "inactive") {
+    content = "❖"; // Inactive symbol (e.g., white star from PDF)
+    bgColor = "bg-gray-200 hover:bg-gray-300";
+    textColor = "text-gray-700";
+    title = `Activate Prayer Token ${slotNumber}`;
+  } else if (status === "active") {
+    content = "🌟"; // Active symbol (e.g., yellow star from PDF)
+    bgColor = "bg-yellow-400 hover:bg-yellow-500";
+    textColor = "text-yellow-900";
+    title = `Deactivate Prayer Token ${slotNumber}`;
+  }
+
+  const isDisabled = status === "unavailable";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isDisabled}
+      title={title}
+      className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold 
+                 border-2 border-yellow-700/50 transition-colors
+                 ${bgColor} ${textColor} ${
+        isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+      }`}
+      aria-label={title}
+    >
+      {content}
+    </button>
+  );
+};
+
 export default function EditableCharacterSheet({
   initialData,
   onSave,
@@ -120,8 +163,52 @@ export default function EditableCharacterSheet({
   const [sheet, setSheet] = useState<CharacterSheetData>(initialData);
 
   useEffect(() => {
-    // Sync with external changes to initialData (e.g., after load or reset)
-    setSheet(initialData);
+    // Sync with external changes & update prayer token availability based on prayer level
+    const newSheet = { ...initialData };
+    let updated = false;
+
+    // Logic to unlock prayer token slots based on Prayer level
+    if (
+      newSheet.skills.prayer.level >= 1 &&
+      newSheet.prayerTokens.slot1 === "unavailable"
+    ) {
+      newSheet.prayerTokens.slot1 = "inactive";
+      updated = true;
+    }
+    if (
+      newSheet.skills.prayer.level >= 4 &&
+      newSheet.prayerTokens.slot2 === "unavailable"
+    ) {
+      newSheet.prayerTokens.slot2 = "inactive";
+      updated = true;
+    }
+    if (
+      newSheet.skills.prayer.level >= 7 &&
+      newSheet.prayerTokens.slot3 === "unavailable"
+    ) {
+      newSheet.prayerTokens.slot3 = "inactive";
+      updated = true;
+    }
+    // If prayer level drops below unlock thresholds, tokens should revert to unavailable
+    // (This logic might be more complex if tokens, once unlocked, remain available but inactive)
+    // For simplicity, let's assume they become unavailable if level drops.
+    if (
+      newSheet.skills.prayer.level < 7 &&
+      newSheet.prayerTokens.slot3 !== "unavailable"
+    ) {
+      newSheet.prayerTokens.slot3 = "unavailable";
+      updated = true;
+    }
+    if (
+      newSheet.skills.prayer.level < 4 &&
+      newSheet.prayerTokens.slot2 !== "unavailable"
+    ) {
+      newSheet.prayerTokens.slot2 = "unavailable";
+      updated = true;
+    }
+    // Slot 1 typically remains available if prayer level >= 1
+
+    setSheet(updated ? { ...newSheet } : initialData);
   }, [initialData]);
 
   const handleChange = (
@@ -165,10 +252,49 @@ export default function EditableCharacterSheet({
     skillName: keyof CharacterSheetData["skills"],
     newLevel: number
   ) => {
-    const currentSkill = sheet.skills[skillName];
-    handleNestedChange("skills", skillName, {
-      ...currentSkill,
-      level: newLevel,
+    setSheet((prev) => {
+      const newSkills = {
+        ...prev.skills,
+        [skillName]: { ...prev.skills[skillName], level: newLevel, xp: 0 }, // Reset XP on manual level change for simplicity
+      };
+
+      // If prayer level changed, re-evaluate token availability
+      let newPrayerTokens = { ...prev.prayerTokens };
+      if (skillName === "prayer") {
+        if (newLevel >= 1 && newPrayerTokens.slot1 === "unavailable")
+          newPrayerTokens.slot1 = "inactive";
+        if (newLevel >= 4 && newPrayerTokens.slot2 === "unavailable")
+          newPrayerTokens.slot2 = "inactive";
+        if (newLevel >= 7 && newPrayerTokens.slot3 === "unavailable")
+          newPrayerTokens.slot3 = "inactive";
+
+        if (newLevel < 7 && newPrayerTokens.slot3 !== "unavailable")
+          newPrayerTokens.slot3 = "unavailable";
+        if (newLevel < 4 && newPrayerTokens.slot2 !== "unavailable")
+          newPrayerTokens.slot2 = "unavailable";
+        if (newLevel < 1 && newPrayerTokens.slot1 !== "unavailable")
+          newPrayerTokens.slot1 = "unavailable"; // Though level usually min 1
+      }
+
+      return { ...prev, skills: newSkills, prayerTokens: newPrayerTokens };
+    });
+  };
+
+  const handlePrayerTokenClick = (
+    slot: keyof CharacterSheetData["prayerTokens"]
+  ) => {
+    setSheet((prev) => {
+      const currentStatus = prev.prayerTokens[slot];
+      if (currentStatus === "unavailable") return prev; // Should not happen if button is disabled
+
+      const newStatus = currentStatus === "inactive" ? "active" : "inactive";
+      return {
+        ...prev,
+        prayerTokens: {
+          ...prev.prayerTokens,
+          [slot]: newStatus,
+        },
+      };
     });
   };
 
@@ -385,25 +511,63 @@ export default function EditableCharacterSheet({
           </div>
         </div>
 
-        {/* Col 3: Skills (Interactive - using InteractiveSkillRow) */}
+        {/* Col 3: Skills (Includes Prayer Skill now) */}
         <div className={`${sectionClasses} lg:col-span-3`}>
           <h3 className={headerClasses}>SKILLS</h3>
           <div className="space-y-0.5">
-            {SKILL_ORDER.map((key) => (
-              <InteractiveSkillRow
-                key={key}
-                name={key}
-                skill={sheet.skills[key]}
-                onXpChange={(newXp) => handleSkillXpChange(key, newXp)}
-                onLevelChange={(newLevel) =>
-                  handleSkillLevelChange(key, newLevel)
-                }
-              />
-            ))}
+            {SKILL_ORDER.map(
+              (
+                key // SKILL_ORDER now includes 'prayer'
+              ) => (
+                <InteractiveSkillRow
+                  key={key}
+                  name={key}
+                  skill={sheet.skills[key]}
+                  onXpChange={(newXp) => handleSkillXpChange(key, newXp)} // Make sure these handlers exist
+                  onLevelChange={(newLevel) =>
+                    handleSkillLevelChange(key, newLevel)
+                  } // And are correctly updating the sheet state
+                />
+              )
+            )}
           </div>
         </div>
 
-        {/* Col 4: Static Info (Remains display-only) */}
+        {/* Col 4: PRAYER TOKENS and Static Info */}
+        <div className="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
+          {/* PRAYER TOKEN SECTION */}
+          <div className={sectionClasses}>
+            <h3 className={headerClasses}>PRAYER TOKENS</h3>
+            <p className="text-xs text-center mb-2 text-yellow-800/80">
+              (Unlock at Prayer Lvl 1, 4, 7)
+            </p>
+            <div className="flex justify-around items-center py-2">
+              <PrayerTokenDisplay
+                slotNumber={1}
+                status={sheet.prayerTokens.slot1}
+                onClick={() => handlePrayerTokenClick("slot1")}
+              />
+              <PrayerTokenDisplay
+                slotNumber={2}
+                status={sheet.prayerTokens.slot2}
+                onClick={() => handlePrayerTokenClick("slot2")}
+              />
+              <PrayerTokenDisplay
+                slotNumber={3}
+                status={sheet.prayerTokens.slot3}
+                onClick={() => handlePrayerTokenClick("slot3")}
+              />
+            </div>
+            {/* The image also shows a slot for the Prayer RS token on the 1-10 track.
+                This is visually represented by the Prayer skill's level in the InteractiveSkillRow.
+                The "active prayer token" circle (5 in the PDF) is conceptual and covered by the PrayerTokenDisplay.
+            */}
+          </div>
+
+          {/* ... (Static Info sections: Turn Reference, Exploring Province/Capital, Logo - as before) ... */}
+        </div>
+
+        {/* Col 5: Static Info (Remains display-only) */}
         <div className="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
           <div
             className={`${sectionClasses} bg-yellow-100/80 text-xs sm:text-sm`}
