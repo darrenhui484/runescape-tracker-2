@@ -60,6 +60,47 @@ export interface CharacterSheetData {
   availableRuneTokens: number;
 }
 
+export interface ClanBankData {
+  resources: {
+    fish: number;
+    wood: number;
+    meat: number;
+    stone: number;
+    herb: number;
+    leather: number;
+    vegetable: number;
+    thread: number;
+    egg: number;
+    metal: number;
+    flour: number;
+    fruit: number;
+    // You could add GP to the clan bank if the game rules support it
+    // gp?: number;
+  };
+  lastUpdated?: string;
+}
+
+export const getDefaultClanBank = (): ClanBankData => ({
+  resources: {
+    fish: 0,
+    wood: 0,
+    meat: 0,
+    stone: 0,
+    herb: 0,
+    leather: 0,
+    vegetable: 0,
+    thread: 0,
+    egg: 0,
+    metal: 0,
+    flour: 0,
+    fruit: 0,
+    // gp: 0,
+  },
+  lastUpdated: new Date().toISOString(),
+});
+
+export const CLAN_BANK_LOCAL_STORAGE_KEY = "rskoe-clan-bank-v1";
+
 export const SKILL_ORDER: (keyof CharacterSheetData["skills"])[] = [
   "melee",
   "ranged",

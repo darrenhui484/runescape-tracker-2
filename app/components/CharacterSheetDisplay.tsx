@@ -1,15 +1,17 @@
 // app/components/CharacterSheetDisplay.tsx (Now Editable)
 import React, { useState, useEffect } from "react";
-import type { CharacterSheetData, Skill } from "~/types/character";
-import {
-  SKILL_ORDER,
-  RESOURCE_ORDER,
-  DEFAULT_SKILL_ICON_PLACEHOLDER,
+import type {
+  CharacterSheetData,
+  ClanBankData,
+  Skill,
 } from "~/types/character";
+import { SKILL_ORDER, RESOURCE_ORDER } from "~/types/character";
 import { getRunecraftingTier } from "~/types/character"; // Import the new helper
 
 interface EditableCharacterSheetProps {
   initialData: CharacterSheetData;
+  initialClanBankData: ClanBankData;
+  onSaveClanBank: (data: ClanBankData) => void;
   onSave: (data: CharacterSheetData) => void; // Callback to trigger saving
 }
 
@@ -52,7 +54,6 @@ const InteractiveSkillRow: React.FC<{
   onXpChange: (newXp: number) => void;
   onLevelChange: (newLevel: number) => void;
 }> = ({ name, skill, onXpChange, onLevelChange }) => {
-
   // This internal function handles the logic of updating XP and potentially leveling up,
   // then calls the appropriate props to update the parent component's state.
   const processSkillUpdate = (newXpCandidate: number, currentLevel: number) => {
@@ -203,9 +204,12 @@ const PrayerTokenDisplay: React.FC<{
 
 export default function EditableCharacterSheet({
   initialData,
+  initialClanBankData,
   onSave,
+  onSaveClanBank,
 }: EditableCharacterSheetProps) {
   const [sheet, setSheet] = useState<CharacterSheetData>(initialData);
+  const [clanBank, setClanBank] = useState<ClanBankData>(initialClanBankData);
 
   useEffect(() => {
     // Sync with external changes & update prayer token availability based on prayer level
@@ -293,6 +297,67 @@ export default function EditableCharacterSheet({
 
     setSheet(updated ? { ...newSheet } : initialData);
   }, [initialData]);
+
+  // --- Handlers for Clan Bank ---
+  const handleClanBankResourceChange = (
+    resourceName: keyof ClanBankData["resources"],
+    change: number // Can be positive (deposit) or negative (withdraw)
+  ) => {
+    setClanBank((prevBank) => {
+      const currentAmount = prevBank.resources[resourceName] || 0;
+      const newAmount = Math.max(0, currentAmount + change); // Ensure not negative
+      const updatedResources = {
+        ...prevBank.resources,
+        [resourceName]: newAmount,
+      };
+      const updatedBank = { ...prevBank, resources: updatedResources };
+      // Immediately call onSaveClanBank to persist the change
+      onSaveClanBank(updatedBank);
+      return updatedBank; // Update local state
+    });
+  };
+
+  // --- Handlers for moving items between Character and Clan Bank ---
+  const moveResourceToBank = (
+    resourceName: keyof CharacterSheetData["resources"]
+  ) => {
+    const characterAmount = sheet.resources[resourceName] || 0;
+    if (characterAmount > 0) {
+      // Decrease character resource
+      setSheet((prevSheet) => ({
+        ...prevSheet,
+        resources: {
+          ...prevSheet.resources,
+          [resourceName]: characterAmount - 1,
+        },
+      }));
+      // Increase clan bank resource
+      handleClanBankResourceChange(resourceName, 1);
+      // Note: onSaveSheet will be called when the main "Save Character" is clicked.
+      // onSaveClanBank is called immediately by handleClanBankResourceChange.
+    }
+  };
+
+  const moveResourceFromBank = (
+    resourceName: keyof CharacterSheetData["resources"]
+  ) => {
+    const bankAmount = clanBank.resources[resourceName] || 0;
+    if (bankAmount > 0) {
+      // Decrease clan bank resource
+      handleClanBankResourceChange(resourceName, -1);
+      // Increase character resource
+      setSheet((prevSheet) => {
+        const currentCharacterAmount = prevSheet.resources[resourceName] || 0;
+        return {
+          ...prevSheet,
+          resources: {
+            ...prevSheet.resources,
+            [resourceName]: currentCharacterAmount + 1,
+          },
+        };
+      });
+    }
+  };
 
   // Handler to manually adjust available Rune tokens
   const adjustAvailableRuneTokens = (change: number) => {
@@ -561,28 +626,46 @@ export default function EditableCharacterSheet({
             </ul>
           </div>
           {/* Resources (Interactive - Inputs) */}
+          {/* Character Resources Section */}
           <div className={sectionClasses}>
-            <h3 className={headerClasses}>RESOURCES</h3>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs sm:text-sm">
+            <h3 className={headerClasses}>Your Resources</h3>
+            <div className="grid grid-cols-1 gap-y-1.5 text-xs sm:text-sm">
               {RESOURCE_ORDER.map((key) => (
-                <div key={key} className="flex justify-between items-center">
-                  <label htmlFor={`res-${key}`} className="capitalize">
+                <div
+                  key={`char-res-${key}`}
+                  className="flex justify-between items-center"
+                >
+                  <label
+                    htmlFor={`char-res-${key}-val`}
+                    className="capitalize w-1/2"
+                  >
                     {key}:
                   </label>
-                  <input
-                    type="number"
-                    id={`res-${key}`}
-                    value={sheet.resources[key]}
-                    onChange={(e) =>
-                      handleNestedChange(
-                        "resources",
-                        key,
-                        parseInt(e.target.value, 10) || 0
-                      )
-                    }
-                    className={`${numberInputClasses} w-12`}
-                    min="0"
-                  />
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveResourceToBank(key)}
+                      title={`Move 1 ${key} to Clan Bank`}
+                      className="px-1 text-xs border rounded hover:bg-gray-100"
+                      disabled={(sheet.resources[key] || 0) <= 0}
+                    >
+                      ➔🏦
+                    </button>
+                    <input
+                      type="number"
+                      id={`char-res-${key}-val`}
+                      value={sheet.resources[key]}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "resources",
+                          key,
+                          parseInt(e.target.value, 10) || 0
+                        )
+                      }
+                      className={`${numberInputClasses} w-10`}
+                      min="0"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -603,6 +686,48 @@ export default function EditableCharacterSheet({
 
         {/* Col 2: Death Tally, Side Quests (Interactive - Inputs) */}
         <div className="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
+          {/* CLAN BANK Section */}
+          <div className={sectionClasses}>
+            <h3 className={headerClasses}>🏦 CLAN BANK</h3>
+            <div className="grid grid-cols-1 gap-y-1.5 text-xs sm:text-sm">
+              {RESOURCE_ORDER.map((key) => (
+                <div
+                  key={`bank-res-${key}`}
+                  className="flex justify-between items-center"
+                >
+                  <label
+                    htmlFor={`bank-res-${key}-val`}
+                    className="capitalize w-1/2"
+                  >
+                    {key}:
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveResourceFromBank(key)}
+                      title={`Take 1 ${key} from Clan Bank`}
+                      className="px-1 text-xs border rounded hover:bg-gray-100"
+                      disabled={(clanBank.resources[key] || 0) <= 0}
+                    >
+                      👤←
+                    </button>
+                    <input
+                      type="number"
+                      id={`bank-res-${key}-val`}
+                      value={clanBank.resources[key]}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10) || 0;
+                        const change = val - (clanBank.resources[key] || 0);
+                        handleClanBankResourceChange(key, change);
+                      }}
+                      className={`${numberInputClasses} w-10`}
+                      min="0"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
           <div className={sectionClasses}>
             <h3 className={headerClasses}>DEATH TALLY</h3>
             <input
