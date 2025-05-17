@@ -103,7 +103,7 @@ export const getDefaultCharacterSheet = (
     thieving: { level: 1, xp: 0 },
     gathering: { level: 1, xp: 0 },
     crafting: { level: 1, xp: 0 },
-    cooking: { level: 1, xp: 1 }, // Default Skiller XP per FAQ
+    cooking: { level: 1, xp: 0 },
     prayer: { level: 1, xp: 0 },
     summoning: { level: 1, xp: 0 },
     runecrafting: { level: 1, xp: 0 },
