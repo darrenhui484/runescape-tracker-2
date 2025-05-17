@@ -27,6 +27,7 @@ export interface CharacterSheetData {
     crafting: Skill;
     cooking: Skill;
     prayer: Skill;
+    summoning: Skill;
   };
   resources: {
     fish: number;
@@ -52,6 +53,7 @@ export interface CharacterSheetData {
   sideQuestsCompletedCount: number;
   lastUpdated?: string;
   prayerTokens: PrayerTokenStatus;
+  availableSummoningTokens: number;
 }
 
 export const SKILL_ORDER: (keyof CharacterSheetData["skills"])[] = [
@@ -63,7 +65,8 @@ export const SKILL_ORDER: (keyof CharacterSheetData["skills"])[] = [
   "gathering",
   "crafting",
   "cooking",
-  "prayer"
+  "prayer",
+  "summoning",
 ];
 
 export const RESOURCE_ORDER: (keyof CharacterSheetData["resources"])[] = [
@@ -97,7 +100,8 @@ export const getDefaultCharacterSheet = (
     gathering: { level: 1, xp: 0 },
     crafting: { level: 1, xp: 0 },
     cooking: { level: 1, xp: 1 }, // Default Skiller XP per FAQ
-    prayer: { level: 1, xp: 0 }
+    prayer: { level: 1, xp: 0 },
+    summoning: { level: 0, xp: 0 },
   },
   resources: {
     fish: 0,
@@ -120,11 +124,13 @@ export const getDefaultCharacterSheet = (
     oneOfEachResource: false,
     complete4SideQuests: false,
   },
-  prayerTokens: { // Default state for prayer tokens
-    slot1: 'unavailable', // Initially unavailable, earned at level 1
-    slot2: 'unavailable', // Earned later
-    slot3: 'unavailable', // Earned later
+  prayerTokens: {
+    // Default state for prayer tokens
+    slot1: "unavailable", // Initially unavailable, earned at level 1
+    slot2: "unavailable", // Earned later
+    slot3: "unavailable", // Earned later
   },
+  availableSummoningTokens: 0, // Starts with 0, gains 1st at Summoning level 1
   sideQuestsCompletedCount: 0,
   lastUpdated: new Date().toISOString(),
 });

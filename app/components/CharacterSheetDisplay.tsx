@@ -10,6 +10,37 @@ interface EditableCharacterSheetProps {
 
 const MAX_XP_SLOTS = 2;
 
+// New component for a single Summoning Token display on the skill card
+const SummoningTokenIcon: React.FC<{
+  isAvailable: boolean;
+  tokenNumber: number;
+}> = ({ isAvailable, tokenNumber }) => {
+  // The image shows numbered circles for the tokens on the skill card.
+  // These aren't active/inactive but rather indicate *possession* of the token.
+  // When a familiar is summoned, a token moves from here to the familiar card.
+  // We'll represent them as "filled" if `availableSummoningTokens >= tokenNumber`
+  return (
+    <div
+      title={`Summoning Token ${tokenNumber} ${
+        isAvailable ? "Available" : "Not Yet Earned/Used"
+      }`}
+      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-base font-bold 
+                 border-2 border-purple-700/70 transition-all
+                 ${
+                   isAvailable
+                     ? "bg-purple-500 text-white shadow-md"
+                     : "bg-gray-300 text-gray-500 opacity-60"
+                 }`}
+    >
+      {/* The image shows 1, 2, 3 on the tokens, let's use that as an example.
+          The separate "Summoning Token" (5 on the PDF) is just one of these available tokens
+          ready to be moved. Our `availableSummoningTokens` count tracks this.
+      */}
+      {tokenNumber}
+    </div>
+  );
+};
+
 const InteractiveSkillRow: React.FC<{
   name: string;
   skill: Skill;
@@ -167,6 +198,44 @@ export default function EditableCharacterSheet({
     const newSheet = { ...initialData };
     let updated = false;
 
+    const currentSummoningLevel = newSheet.skills.summoning?.level || 1; // Ensure summoning skill exists
+    let maxTokensForLevel = 0;
+    if (currentSummoningLevel >= 7) {
+      maxTokensForLevel = 3;
+    } else if (currentSummoningLevel >= 4) {
+      maxTokensForLevel = 2;
+    } else if (currentSummoningLevel >= 1) {
+      maxTokensForLevel = 1;
+    }
+
+    // The `availableSummoningTokens` should not exceed what's earned by level,
+    // but also reflects tokens currently *on the skill card*.
+    // For simplicity, let's assume `availableSummoningTokens` is capped by `maxTokensForLevel`.
+    // A more complex system would track tokens on familiars separately.
+    // For this UI, `availableSummoningTokens` represents tokens ready to be used.
+    // We will ensure it's correctly initialized/updated based on level.
+    if (
+      newSheet.availableSummoningTokens === undefined ||
+      newSheet.availableSummoningTokens > maxTokensForLevel
+    ) {
+      // Initialize or adjust if the saved value is inconsistent with current level perks.
+      // This simple logic sets it to max possible if it's out of sync.
+      // A game might have rules about losing tokens if level drops, etc.
+      // For now, let's just ensure it's initialized based on level if not set.
+      // If it *is* set, we assume the player is managing it (e.g., "spending" them).
+      // Let's initialize it if it's undefined:
+      if (newSheet.availableSummoningTokens === undefined) {
+        newSheet.availableSummoningTokens = maxTokensForLevel;
+        updated = true;
+      }
+    }
+    // If the sheet loads and summoning level grants more tokens than currently available, update.
+    // This logic helps to automatically "grant" tokens when level thresholds are met.
+    else if (newSheet.availableSummoningTokens < maxTokensForLevel) {
+      newSheet.availableSummoningTokens = maxTokensForLevel; // Player gains tokens up to their level cap
+      updated = true;
+    }
+
     // Logic to unlock prayer token slots based on Prayer level
     if (
       newSheet.skills.prayer.level >= 1 &&
@@ -258,6 +327,27 @@ export default function EditableCharacterSheet({
         [skillName]: { ...prev.skills[skillName], level: newLevel, xp: 0 }, // Reset XP on manual level change for simplicity
       };
 
+      let newAvailableSummoningTokens = prev.availableSummoningTokens;
+      if (skillName === "summoning") {
+        let maxTokensForNewLevel = 0;
+        if (newLevel >= 7) maxTokensForNewLevel = 3;
+        else if (newLevel >= 4) maxTokensForNewLevel = 2;
+        else if (newLevel >= 1) maxTokensForNewLevel = 1;
+
+        // Grant tokens if level up allows for more.
+        // Player doesn't lose tokens if level drops in this simple model,
+        // but they can't gain more than their current level allows.
+        // This assumes `availableSummoningTokens` is manually decremented when a token is "used".
+        if (newAvailableSummoningTokens < maxTokensForNewLevel) {
+          newAvailableSummoningTokens = maxTokensForNewLevel;
+        }
+        // Cap it if it somehow exceeds max (e.g. dev error or data corruption)
+        newAvailableSummoningTokens = Math.min(
+          newAvailableSummoningTokens,
+          maxTokensForNewLevel
+        );
+      }
+
       // If prayer level changed, re-evaluate token availability
       let newPrayerTokens = { ...prev.prayerTokens };
       if (skillName === "prayer") {
@@ -276,7 +366,27 @@ export default function EditableCharacterSheet({
           newPrayerTokens.slot1 = "unavailable"; // Though level usually min 1
       }
 
-      return { ...prev, skills: newSkills, prayerTokens: newPrayerTokens };
+      return {
+        ...prev,
+        skills: newSkills,
+        availableSummoningTokens: newAvailableSummoningTokens,
+        prayerTokens: newPrayerTokens,
+      };
+    });
+  };
+
+  // Handler to manually adjust available summoning tokens (e.g., when one is "used" or "returned")
+  const adjustAvailableSummoningTokens = (change: number) => {
+    setSheet((prev) => {
+      const currentSummoningLevel = prev.skills.summoning?.level || 1;
+      let maxTokensForLevel = 0;
+      if (currentSummoningLevel >= 7) maxTokensForLevel = 3;
+      else if (currentSummoningLevel >= 4) maxTokensForLevel = 2;
+      else if (currentSummoningLevel >= 1) maxTokensForLevel = 1;
+
+      let newCount = prev.availableSummoningTokens + change;
+      newCount = Math.max(0, Math.min(newCount, maxTokensForLevel)); // Cannot go below 0 or above max for current level
+      return { ...prev, availableSummoningTokens: newCount };
     });
   };
 
@@ -535,6 +645,49 @@ export default function EditableCharacterSheet({
 
         {/* Col 4: PRAYER TOKENS and Static Info */}
         <div className="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
+          {/* SUMMONING TOKEN SECTION */}
+          <div className={sectionClasses}>
+            <h3 className={headerClasses}>SUMMONING TOKENS</h3>
+            <p className="text-xs text-center mb-2 text-purple-800/80">
+              (Earn 1st at Lvl 1, 2nd at Lvl 4, 3rd at Lvl 7)
+            </p>
+            <div className="flex justify-around items-center py-2">
+              {/* Display up to 3 token slots visually */}
+              <SummoningTokenIcon
+                tokenNumber={1}
+                isAvailable={sheet.availableSummoningTokens >= 1}
+              />
+              <SummoningTokenIcon
+                tokenNumber={2}
+                isAvailable={sheet.availableSummoningTokens >= 2}
+              />
+              <SummoningTokenIcon
+                tokenNumber={3}
+                isAvailable={sheet.availableSummoningTokens >= 3}
+              />
+            </div>
+            <p className="text-xs text-center mt-2 text-purple-800/80">
+              Available on skill card: {sheet.availableSummoningTokens}
+            </p>
+            {/* Add buttons to manually increment/decrement for testing or if rules allow returning tokens */}
+            <div className="flex justify-center gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => adjustAvailableSummoningTokens(-1)}
+                className="text-xs px-2 py-0.5 border rounded bg-gray-200 hover:bg-gray-300"
+                disabled={sheet.availableSummoningTokens <= 0}
+              >
+                Use Token
+              </button>
+              <button
+                type="button"
+                onClick={() => adjustAvailableSummoningTokens(1)}
+                className="text-xs px-2 py-0.5 border rounded bg-gray-200 hover:bg-gray-300"
+              >
+                Return/Gain Token
+              </button>
+            </div>
+          </div>
           {/* PRAYER TOKEN SECTION */}
           <div className={sectionClasses}>
             <h3 className={headerClasses}>PRAYER TOKENS</h3>
