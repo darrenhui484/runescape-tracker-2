@@ -2,6 +2,7 @@
 export interface Skill {
   level: number;
   xp: number; // 0, 1, or 2
+  iconUrl?: string;
 }
 
 export interface PrayerTokenStatus {
@@ -88,6 +89,26 @@ export const RESOURCE_ORDER: (keyof CharacterSheetData["resources"])[] = [
   "fruit",
 ];
 
+export const DEFAULT_SKILL_ICON_PLACEHOLDER =
+  "/icons/default-skill-placeholder.svg";
+
+const EXTERNAL_IMAGES = {
+  SKILLS: {
+    MELEE: "https://runescape.wiki/images/Attack_detail.png?346f8",
+    RANGED: "https://runescape.wiki/images/Ranged_detail.png?346f8",
+    MAGIC: "https://runescape.wiki/images/Magic_detail.png?346f8",
+    DEFENCE: "https://runescape.wiki/images/Defence_detail.png?346f8",
+    THIEVING: "https://runescape.wiki/images/Thieving_detail.png?346f8",
+    GATHERING: "https://oldschool.runescape.wiki/images/Inventory.png?d4795",
+    CRAFTING: "https://runescape.wiki/images/Crafting_detail.png?346f8",
+    COOKING: "https://runescape.wiki/images/Cooking_detail.png?346f8",
+    PRAYER: "https://runescape.wiki/images/Prayer_detail.png?346f8",
+    SUMMONING: "https://runescape.wiki/images/Summoning_detail.png?346f8",
+    RUNECRAFTING: "https://runescape.wiki/images/Runecrafting_detail.png?346f8",
+  },
+  RESOURCES: {},
+};
+
 export const getDefaultCharacterSheet = (
   name: string = "Adventurer"
 ): CharacterSheetData => ({
@@ -96,17 +117,21 @@ export const getDefaultCharacterSheet = (
   deathTally: 0,
   gp: 10,
   skills: {
-    melee: { level: 1, xp: 0 },
-    ranged: { level: 1, xp: 0 },
-    magic: { level: 1, xp: 0 },
-    defence: { level: 1, xp: 0 },
-    thieving: { level: 1, xp: 0 },
-    gathering: { level: 1, xp: 0 },
-    crafting: { level: 1, xp: 0 },
-    cooking: { level: 1, xp: 0 },
-    prayer: { level: 1, xp: 0 },
-    summoning: { level: 1, xp: 0 },
-    runecrafting: { level: 1, xp: 0 },
+    melee: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.MELEE },
+    ranged: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.RANGED },
+    magic: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.MAGIC },
+    defence: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.DEFENCE },
+    thieving: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.THIEVING },
+    gathering: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.GATHERING },
+    crafting: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.CRAFTING },
+    cooking: { level: 1, xp: 1, iconUrl: EXTERNAL_IMAGES.SKILLS.COOKING },
+    prayer: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.PRAYER },
+    summoning: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.SUMMONING },
+    runecrafting: {
+      level: 1,
+      xp: 0,
+      iconUrl: EXTERNAL_IMAGES.SKILLS.RUNECRAFTING,
+    },
   },
   resources: {
     fish: 0,

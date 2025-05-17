@@ -1,7 +1,11 @@
 // app/components/CharacterSheetDisplay.tsx (Now Editable)
 import React, { useState, useEffect } from "react";
 import type { CharacterSheetData, Skill } from "~/types/character";
-import { SKILL_ORDER, RESOURCE_ORDER } from "~/types/character";
+import {
+  SKILL_ORDER,
+  RESOURCE_ORDER,
+  DEFAULT_SKILL_ICON_PLACEHOLDER,
+} from "~/types/character";
 import { getRunecraftingTier } from "~/types/character"; // Import the new helper
 
 interface EditableCharacterSheetProps {
@@ -48,6 +52,7 @@ const InteractiveSkillRow: React.FC<{
   onXpChange: (newXp: number) => void;
   onLevelChange: (newLevel: number) => void;
 }> = ({ name, skill, onXpChange, onLevelChange }) => {
+
   // This internal function handles the logic of updating XP and potentially leveling up,
   // then calls the appropriate props to update the parent component's state.
   const processSkillUpdate = (newXpCandidate: number, currentLevel: number) => {
@@ -103,9 +108,17 @@ const InteractiveSkillRow: React.FC<{
 
   return (
     <div className="flex justify-between items-center py-1.5 border-b border-yellow-700/30 last:border-b-0">
-      <span className="font-semibold capitalize text-sm sm:text-base w-2/5">
-        {name}
-      </span>
+      {/* Skill Name and Icon */}
+      <div className="flex items-center gap-2 w-2/5">
+        <img
+          src={skill.iconUrl}
+          alt={`${name} icon`}
+          className="w-5 h-5 sm:w-6 sm:h-6 object-contain" // Adjust size as needed
+        />
+        <span className="font-semibold capitalize text-sm sm:text-base">
+          {name}
+        </span>
+      </div>
       <div className="flex items-center gap-2 sm:gap-3 w-3/5 justify-end">
         {/* XP Dots */}
         <div className="flex gap-1">
