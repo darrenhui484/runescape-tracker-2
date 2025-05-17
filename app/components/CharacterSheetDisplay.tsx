@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import type { CharacterSheetData, Skill } from "~/types/character";
 import { SKILL_ORDER, RESOURCE_ORDER } from "~/types/character";
+import { getRunecraftingTier } from "~/types/character"; // Import the new helper
 
 interface EditableCharacterSheetProps {
   initialData: CharacterSheetData;
@@ -280,6 +281,25 @@ export default function EditableCharacterSheet({
     setSheet(updated ? { ...newSheet } : initialData);
   }, [initialData]);
 
+  // Handler to manually adjust available Rune tokens
+  const adjustAvailableRuneTokens = (change: number) => {
+    setSheet((prev) => {
+      // Max runes from a single bonus action depends on tier, but total available isn't strictly capped by tier here.
+      // However, a player likely wouldn't hoard too many if they can only place based on tier.
+      // Let's cap it at a reasonable number for UI sanity, e.g., 10, or remove cap.
+      const currentTier = getRunecraftingTier(
+        prev.skills.runecrafting?.level || 1
+      );
+      // The number of tokens they can *place* on a spell is tier (1, 2, or 3).
+      // The number they can *gain* from the bonus action is tier.
+      // The number they can *hold* is not explicitly limited in rules shown, but let's add a soft cap.
+      const MAX_HOLDABLE_RUNES = 9; // Arbitrary soft cap for UI
+      let newCount = prev.availableRuneTokens + change;
+      newCount = Math.max(0, Math.min(newCount, MAX_HOLDABLE_RUNES));
+      return { ...prev, availableRuneTokens: newCount };
+    });
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -431,6 +451,11 @@ export default function EditableCharacterSheet({
   const textInputClasses = `${inputBaseClasses} w-full`;
 
   const maxWounds = sheet.sideQuestsCompletedCount >= 5 ? 4 : 3;
+
+  // Calculate current Runecrafting Tier for display
+  const currentRunecraftingTier = getRunecraftingTier(
+    sheet.skills.runecrafting?.level || 1
+  );
 
   // The JSX will be almost identical to CharacterSheetForm,
   // as it now needs to be interactive.
@@ -625,26 +650,71 @@ export default function EditableCharacterSheet({
         <div className={`${sectionClasses} lg:col-span-3`}>
           <h3 className={headerClasses}>SKILLS</h3>
           <div className="space-y-0.5">
-            {SKILL_ORDER.map(
-              (
-                key // SKILL_ORDER now includes 'prayer'
-              ) => (
-                <InteractiveSkillRow
-                  key={key}
-                  name={key}
-                  skill={sheet.skills[key]}
-                  onXpChange={(newXp) => handleSkillXpChange(key, newXp)} // Make sure these handlers exist
-                  onLevelChange={(newLevel) =>
-                    handleSkillLevelChange(key, newLevel)
-                  } // And are correctly updating the sheet state
-                />
-              )
-            )}
+            {SKILL_ORDER.map((key) => (
+              <InteractiveSkillRow
+                key={key}
+                name={key}
+                skill={sheet.skills[key]}
+                onXpChange={(newXp) => handleSkillXpChange(key, newXp)}
+                onLevelChange={(newLevel) =>
+                  handleSkillLevelChange(key, newLevel)
+                }
+              />
+            ))}
           </div>
         </div>
 
-        {/* Col 4: PRAYER TOKENS and Static Info */}
+        {/* Col 4: SPECIAL SKILL TOKENS (Prayer, Summoning, Runecrafting) and Static Info */}
         <div className="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
+          {/* RUNECRAFTING TIER & TOKENS SECTION */}
+          <div className={sectionClasses}>
+            <h3 className={headerClasses}>RUNECRAFTING</h3>
+            <div className="text-center space-y-2">
+              <p className="text-sm text-sky-700/90">
+                Current Tier:{" "}
+                <span className="font-bold text-lg">
+                  {currentRunecraftingTier}
+                </span>
+              </p>
+              <p className="text-xs text-sky-700/80">
+                (Tier 1: Lvl 1-3, Tier 2: Lvl 4-6, Tier 3: Lvl 7+)
+              </p>
+              <div className="mt-2">
+                <p className="text-sm font-semibold text-sky-800">
+                  Available Rune Tokens:
+                </p>
+                <div className="flex items-center justify-center gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => adjustAvailableRuneTokens(-1)}
+                    className="px-3 py-1 text-lg font-bold border rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+                    disabled={sheet.availableRuneTokens <= 0}
+                    title="Use/Place Rune Token"
+                  >
+                    -
+                  </button>
+                  <span className="text-2xl font-bold text-sky-600 w-8 text-center">
+                    {sheet.availableRuneTokens}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => adjustAvailableRuneTokens(1)}
+                    className="px-3 py-1 text-lg font-bold border rounded-md bg-gray-200 hover:bg-gray-300"
+                    title="Gain Rune Token (e.g., from Bonus Action)"
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="text-xs mt-1 text-sky-700/80">
+                  Max gainable per Bonus Action: Tier Level
+                </p>
+              </div>
+            </div>
+            {/* The Runecrafting skill card in the PDF shows "Runecrafting Tiers" information (3 circles with text).
+                This is represented by our "Current Tier" display.
+                The four different designs of rune tokens are interchangeable, so we just track the count.
+            */}
+          </div>
           {/* SUMMONING TOKEN SECTION */}
           <div className={sectionClasses}>
             <h3 className={headerClasses}>SUMMONING TOKENS</h3>

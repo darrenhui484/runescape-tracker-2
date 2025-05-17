@@ -28,6 +28,7 @@ export interface CharacterSheetData {
     cooking: Skill;
     prayer: Skill;
     summoning: Skill;
+    runecrafting: Skill;
   };
   resources: {
     fish: number;
@@ -54,6 +55,8 @@ export interface CharacterSheetData {
   lastUpdated?: string;
   prayerTokens: PrayerTokenStatus;
   availableSummoningTokens: number;
+  /** Number of available Rune tokens the player has, not yet placed on spell cards. */
+  availableRuneTokens: number;
 }
 
 export const SKILL_ORDER: (keyof CharacterSheetData["skills"])[] = [
@@ -67,6 +70,7 @@ export const SKILL_ORDER: (keyof CharacterSheetData["skills"])[] = [
   "cooking",
   "prayer",
   "summoning",
+  "runecrafting",
 ];
 
 export const RESOURCE_ORDER: (keyof CharacterSheetData["resources"])[] = [
@@ -101,7 +105,8 @@ export const getDefaultCharacterSheet = (
     crafting: { level: 1, xp: 0 },
     cooking: { level: 1, xp: 1 }, // Default Skiller XP per FAQ
     prayer: { level: 1, xp: 0 },
-    summoning: { level: 0, xp: 0 },
+    summoning: { level: 1, xp: 0 },
+    runecrafting: { level: 1, xp: 0 },
   },
   resources: {
     fish: 0,
@@ -131,8 +136,16 @@ export const getDefaultCharacterSheet = (
     slot3: "unavailable", // Earned later
   },
   availableSummoningTokens: 0, // Starts with 0, gains 1st at Summoning level 1
+  availableRuneTokens: 0, // Starts with 0 Rune tokens
   sideQuestsCompletedCount: 0,
   lastUpdated: new Date().toISOString(),
 });
+
+// Helper function to determine Runecrafting Tier based on level
+export const getRunecraftingTier = (level: number): 1 | 2 | 3 => {
+  if (level >= 7) return 3; // Tier 3 at level 7+
+  if (level >= 4) return 2; // Tier 2 at level 4-6
+  return 1; // Tier 1 at level 1-3
+};
 
 export const LOCAL_STORAGE_KEY = "rskoe-character-sheet-display-v1";
