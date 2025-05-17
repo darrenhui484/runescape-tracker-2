@@ -1,22 +1,27 @@
-import type { Config } from "tailwindcss";
-
-export default {
-  content: ["./app/**/{**,.client,.server}/**/*.{js,jsx,ts,tsx}"],
+// tailwind.config.js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./app/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        sans: [
-          "Inter",
-          "ui-sans-serif",
-          "system-ui",
-          "sans-serif",
-          "Apple Color Emoji",
-          "Segoe UI Emoji",
-          "Segoe UI Symbol",
-          "Noto Color Emoji",
-        ],
+        // Example: If you add Merriweather via Google Fonts or locally
+        'custom-serif': ['Merriweather', 'Georgia', 'serif'],
       },
+      colors: {
+        // Define your parchment/ink colors here for consistency
+        'parchment': {
+          light: '#fdf5e6', // Lighter parchment
+          DEFAULT: '#f5e5c6', // Main parchment
+          dark: '#eaddc0',  // Darker shade
+        },
+        'ink': {
+          DEFAULT: '#5a3d2b', // Dark brown for text
+          light: '#7b5e48',
+        },
+        'border-dark': '#8B4513', // A dark brown for borders
+      }
     },
   },
   plugins: [],
-} satisfies Config;
+}
