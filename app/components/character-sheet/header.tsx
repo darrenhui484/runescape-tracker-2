@@ -1,6 +1,6 @@
 interface CharacterHeaderProps {
   characterName: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (name: string) => void;
 }
 export const CharacterHeader: React.FC<CharacterHeaderProps> = ({
   characterName,
@@ -11,7 +11,7 @@ export const CharacterHeader: React.FC<CharacterHeaderProps> = ({
       type="text"
       name="characterName"
       value={characterName}
-      onChange={onChange}
+      onChange={(e) => onChange(e.target.value)}
       className="text-2xl sm:text-3xl font-bold bg-transparent text-center w-full border-none focus:ring-0 placeholder-yellow-700/50"
       placeholder="Enter Character Name"
     />

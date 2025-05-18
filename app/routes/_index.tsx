@@ -55,7 +55,6 @@ export default function Index() {
         };
         localStorage.setItem(CHARACTER_SHEET_KEY, JSON.stringify(updatedData));
         setSheetData(updatedData); // Update state
-        alert("Character Sheet Saved!");
       } catch (error) {
         console.error("Error saving character sheet:", error);
         alert("Failed to save character sheet.");
@@ -75,8 +74,6 @@ export default function Index() {
           JSON.stringify(updatedData)
         );
         setClanBankData(updatedData); // Update state
-        // No alert here as it might be too noisy for every bank transaction
-        console.log("Clan Bank Saved!");
       } catch (error) {
         console.error("Error saving clan bank:", error);
         alert("Failed to save clan bank.");

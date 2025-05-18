@@ -1,21 +1,20 @@
-import { SectionProps, SheetSection } from "./sheet-section";
+import Counter from "../counter";
+import { SheetSection } from "./sheet-section";
 
 interface GPSectionProps {
   gp: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  textInputClasses: string;
+  onGPChange: (newGp: number) => void;
 }
-export const GPSection: React.FC<
-  GPSectionProps & Omit<SectionProps, "title" | "children">
-> = ({ gp, onChange, textInputClasses, ...rest }) => (
-  <SheetSection title="GP" {...rest}>
-    <input
-      type="number"
-      name="gp"
-      value={gp}
-      onChange={onChange}
-      className={`${textInputClasses} text-center font-bold text-lg`}
-      min="0"
-    />
+export const GPSection: React.FC<GPSectionProps> = ({
+  gp,
+  onGPChange,
+}) => (
+  <SheetSection title="GP">
+    <Counter
+      onIncrement={() => onGPChange(gp + 1)}
+      onDecrement={() => onGPChange(gp - 1)}
+    >
+      {gp}
+    </Counter>
   </SheetSection>
 );

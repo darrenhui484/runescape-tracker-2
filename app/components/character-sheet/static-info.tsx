@@ -5,8 +5,7 @@ export const StaticInfoSection: React.FC = () => (
   <>
     <SheetSection
       title="TURN REFERENCE"
-      sectionClasses={`${sectionClasses} bg-yellow-100/80`}
-      headerClasses={`${headerClasses} text-sm sm:text-base`}
+      className={`${sectionClasses} bg-yellow-100/80`}
     >
       <ol className="list-decimal list-inside space-y-0.5 text-xs sm:text-sm">
         <li>Move/Teleport</li>
@@ -22,8 +21,7 @@ export const StaticInfoSection: React.FC = () => (
     </SheetSection>
     <SheetSection
       title="EXPLORING PROVINCE"
-      sectionClasses={`${sectionClasses} bg-yellow-100/80`}
-      headerClasses={`${headerClasses} text-sm sm:text-base`}
+      className={`${sectionClasses} bg-yellow-100/80`}
     >
       <p className="text-xs sm:text-sm">
         Draw exploration card. Forage or Skill per icon.
@@ -31,8 +29,7 @@ export const StaticInfoSection: React.FC = () => (
     </SheetSection>
     <SheetSection
       title="EXPLORING CAPITAL"
-      sectionClasses={`${sectionClasses} bg-yellow-100/80`}
-      headerClasses={`${headerClasses} text-sm sm:text-base`}
+      className={`${sectionClasses} bg-yellow-100/80`}
     >
       <p className="text-xs sm:text-sm">
         Gain XP by discarding GP per skill. May forage.

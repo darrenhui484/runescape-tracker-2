@@ -1,10 +1,3 @@
-// app/types/character.ts
-export interface Skill {
-  level: number;
-  xp: number; // 0, 1, or 2
-  iconUrl?: string;
-}
-
 export interface PrayerTokenStatus {
   // We might have a few slots for prayer tokens. Let's assume 3 for now based on description.
   // Each can be 'inactive', 'active', or 'unavailable' (if not yet earned)
@@ -16,20 +9,20 @@ export interface PrayerTokenStatus {
 export interface CharacterSheetData {
   characterName: string;
   wounds: number;
-  deathTally: number;
+  deaths: number;
   gp: number;
   skills: {
-    melee: Skill;
-    ranged: Skill;
-    magic: Skill;
-    defence: Skill;
-    thieving: Skill;
-    gathering: Skill;
-    crafting: Skill;
-    cooking: Skill;
-    prayer: Skill;
-    summoning: Skill;
-    runecrafting: Skill;
+    melee: number;
+    ranged: number;
+    magic: number;
+    defence: number;
+    thieving: number;
+    gathering: number;
+    crafting: number;
+    cooking: number;
+    prayer: number;
+    summoning: number;
+    runecrafting: number;
   };
   resources: {
     fish: number;
@@ -44,6 +37,8 @@ export interface CharacterSheetData {
     metal: number;
     flour: number;
     fruit: number;
+    lobster: number;
+    ration: number;
   };
   capeObjectives: {
     level8InAnySkill: boolean;
@@ -60,7 +55,7 @@ export interface CharacterSheetData {
   availableRuneTokens: number;
 }
 
-export interface ClanBankData {
+export type ClanBankData = {
   resources: {
     fish: number;
     wood: number;
@@ -74,11 +69,13 @@ export interface ClanBankData {
     metal: number;
     flour: number;
     fruit: number;
+    lobster: number;
+    ration: number;
     // You could add GP to the clan bank if the game rules support it
     // gp?: number;
   };
   lastUpdated?: string;
-}
+};
 
 export const getDefaultClanBank = (): ClanBankData => ({
   resources: {
@@ -94,6 +91,8 @@ export const getDefaultClanBank = (): ClanBankData => ({
     metal: 0,
     flour: 0,
     fruit: 0,
+    lobster: 0,
+    ration: 0,
     // gp: 0,
   },
   lastUpdated: new Date().toISOString(),
@@ -128,10 +127,9 @@ export const RESOURCE_ORDER: (keyof CharacterSheetData["resources"])[] = [
   "metal",
   "flour",
   "fruit",
+  "lobster",
+  "ration",
 ];
-
-export const DEFAULT_SKILL_ICON_PLACEHOLDER =
-  "/icons/default-skill-placeholder.svg";
 
 const EXTERNAL_IMAGES = {
   SKILLS: {
@@ -147,7 +145,49 @@ const EXTERNAL_IMAGES = {
     SUMMONING: "https://runescape.wiki/images/Summoning_detail.png?346f8",
     RUNECRAFTING: "https://runescape.wiki/images/Runecrafting_detail.png?346f8",
   },
-  RESOURCES: {},
+  RESOURCES: {
+    FISH: "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Fish.png",
+    WOOD: "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Wood.png",
+    MEAT: "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Meat.png",
+    STONE:
+      "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Stone.png",
+    HERB: "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Herb.png",
+    LEATHER:
+      "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Leather.png",
+    VEGETABLE:
+      "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Vegetable.png",
+    THREAD:
+      "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Thread.png",
+    EGG: "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Egg.png",
+    METAL:
+      "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Metal.png",
+    FLOUR:
+      "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Flour.png",
+    FRUIT:
+      "https://raw.githubusercontent.com/darrenhui484/runescape-tracker/refs/heads/main/public/resource/Fruit.png",
+    LOBSTER: "https://runescape.wiki/images/Lobster.png?48782",
+    RATION: "https://runescape.wiki/images/Pork_pie.png?467bc",
+  },
+} as const;
+
+export const getResourceImageUrl = (
+  resourceName: keyof CharacterSheetData["resources"]
+) => {
+  return EXTERNAL_IMAGES.RESOURCES[
+    resourceName.toUpperCase() as keyof typeof EXTERNAL_IMAGES.RESOURCES
+  ];
+};
+
+export const getSkillImageUrl = (
+  skillName: keyof CharacterSheetData["skills"]
+) => {
+  return EXTERNAL_IMAGES.SKILLS[
+    skillName.toUpperCase() as keyof typeof EXTERNAL_IMAGES.SKILLS
+  ];
+};
+
+export const getLevel = (xp: number) => {
+  return Math.floor(xp / 3);
 };
 
 export const getDefaultCharacterSheet = (
@@ -155,24 +195,20 @@ export const getDefaultCharacterSheet = (
 ): CharacterSheetData => ({
   characterName: name,
   wounds: 0,
-  deathTally: 0,
-  gp: 10,
+  deaths: 0,
+  gp: 0,
   skills: {
-    melee: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.MELEE },
-    ranged: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.RANGED },
-    magic: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.MAGIC },
-    defence: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.DEFENCE },
-    thieving: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.THIEVING },
-    gathering: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.GATHERING },
-    crafting: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.CRAFTING },
-    cooking: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.COOKING },
-    prayer: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.PRAYER },
-    summoning: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.SUMMONING },
-    runecrafting: {
-      level: 1,
-      xp: 0,
-      iconUrl: EXTERNAL_IMAGES.SKILLS.RUNECRAFTING,
-    },
+    melee: 0,
+    ranged: 0,
+    magic: 0,
+    defence: 0,
+    thieving: 0,
+    gathering: 0,
+    crafting: 0,
+    cooking: 0,
+    prayer: 0,
+    summoning: 0,
+    runecrafting: 0,
   },
   resources: {
     fish: 0,
@@ -187,6 +223,8 @@ export const getDefaultCharacterSheet = (
     metal: 0,
     flour: 0,
     fruit: 0,
+    lobster: 0,
+    ration: 0,
   },
   capeObjectives: {
     level8InAnySkill: false,

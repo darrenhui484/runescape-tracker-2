@@ -1,5 +1,10 @@
-import { CharacterSheetData, RESOURCE_ORDER } from "~/types/character";
-import { SectionProps, SheetSection } from "./sheet-section";
+import {
+  CharacterSheetData,
+  getResourceImageUrl,
+  RESOURCE_ORDER,
+} from "~/types/character";
+import { SheetSection } from "./sheet-section";
+import Counter from "../counter";
 
 interface CharacterResourcesSectionProps {
   resources: CharacterSheetData["resources"];
@@ -8,27 +13,31 @@ interface CharacterResourcesSectionProps {
     value: number
   ) => void;
   onMoveToBank: (key: keyof CharacterSheetData["resources"]) => void;
-  numberInputClasses: string;
 }
 export const CharacterResourcesSection: React.FC<
-  CharacterResourcesSectionProps & Omit<SectionProps, "title" | "children">
-> = ({
-  resources,
-  onResourceChange,
-  onMoveToBank,
-  numberInputClasses,
-  ...rest
-}) => (
-  <SheetSection title="Your Resources" {...rest}>
-    <div className="grid grid-cols-1 gap-y-1.5 text-xs sm:text-sm">
+  CharacterResourcesSectionProps
+> = ({ resources, onResourceChange, onMoveToBank }) => (
+  <SheetSection title="Your Resources">
+    <div className="grid grid-cols-1 gap-y-2 text-xs sm:text-sm">
       {RESOURCE_ORDER.map((key) => (
         <div
           key={`char-res-${key}`}
           className="flex justify-between items-center"
         >
-          <label htmlFor={`char-res-${key}-val`} className="capitalize w-1/2">
-            {key}:
-          </label>
+          <div className="flex items-center gap-2">
+            <img
+              src={getResourceImageUrl(key)}
+              alt={key}
+              className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+            />
+            <label
+              htmlFor={`char-res-${key}-val`}
+              className="w-1/2 font-semibold capitalize text-sm sm:text-base"
+            >
+              {key}
+            </label>
+          </div>
+
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -39,16 +48,16 @@ export const CharacterResourcesSection: React.FC<
             >
               ➔🏦
             </button>
-            <input
-              type="number"
-              id={`char-res-${key}-val`}
-              value={resources[key]}
-              onChange={(e) =>
-                onResourceChange(key, parseInt(e.target.value, 10) || 0)
+            <Counter
+              onIncrement={() =>
+                onResourceChange(key, (resources[key] || 0) + 1)
               }
-              className={`${numberInputClasses} w-10`}
-              min="0"
-            />
+              onDecrement={() =>
+                onResourceChange(key, (resources[key] || 0) - 1)
+              }
+            >
+              {resources[key]}
+            </Counter>
           </div>
         </div>
       ))}

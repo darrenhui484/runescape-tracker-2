@@ -9,23 +9,19 @@ interface SkillsSectionProps {
     skillName: keyof CharacterSheetData["skills"],
     newXp: number
   ) => void;
-  onSkillLevelChange: (
-    skillName: keyof CharacterSheetData["skills"],
-    newLevel: number
-  ) => void;
 }
-export const SkillsSection: React.FC<
-  SkillsSectionProps & Omit<SectionProps, "title" | "children">
-> = ({ skills, onSkillXpChange, onSkillLevelChange, ...rest }) => (
-  <SheetSection title="SKILLS" {...rest} className="lg:col-span-3">
+export const SkillsSection: React.FC<SkillsSectionProps> = ({
+  skills,
+  onSkillXpChange,
+}) => (
+  <SheetSection title="SKILLS" className="lg:col-span-3">
     <div className="space-y-0.5">
       {SKILL_ORDER.map((key) => (
         <InteractiveSkillRow
           key={key}
           name={key}
-          skill={skills[key]}
+          totalXp={skills[key]}
           onXpChange={(newXp) => onSkillXpChange(key, newXp)}
-          onLevelChange={(newLevel) => onSkillLevelChange(key, newLevel)}
         />
       ))}
     </div>

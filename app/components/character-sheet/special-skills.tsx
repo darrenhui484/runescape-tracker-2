@@ -1,7 +1,12 @@
-import { CharacterSheetData, getRunecraftingTier } from "~/types/character";
+import {
+  CharacterSheetData,
+  getLevel,
+  getRunecraftingTier,
+} from "~/types/character";
 import { SectionProps, SheetSection } from "./sheet-section";
 import { PrayerTokenDisplay } from "./prayer-token-display";
 import { SummoningTokenIcon } from "./summoning-token-icon";
+import Counter from "../counter";
 
 interface SpecialTokensSectionProps {
   sheet: CharacterSheetData; // Pass the whole sheet for various derived values
@@ -22,7 +27,7 @@ export const SpecialTokensSection: React.FC<
   onAdjustRuneTokens,
 }) => {
   const currentRunecraftingTier = getRunecraftingTier(
-    sheet.skills.runecrafting?.level || 1
+    getLevel(sheet.skills.runecrafting)
   );
 
   return (
@@ -107,24 +112,12 @@ export const SpecialTokensSection: React.FC<
               Available Rune Tokens:
             </p>
             <div className="flex items-center justify-center gap-2 mt-1">
-              <button
-                type="button"
-                onClick={() => onAdjustRuneTokens(-1)}
-                className="px-3 py-1 text-lg font-bold border rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-                disabled={sheet.availableRuneTokens <= 0}
+              <Counter
+                onIncrement={() => onAdjustRuneTokens(sheet.availableRuneTokens + 1)}
+                onDecrement={() => onAdjustRuneTokens(sheet.availableRuneTokens - 1)}
               >
-                -
-              </button>
-              <span className="text-2xl font-bold text-sky-600 w-8 text-center">
                 {sheet.availableRuneTokens}
-              </span>
-              <button
-                type="button"
-                onClick={() => onAdjustRuneTokens(1)}
-                className="px-3 py-1 text-lg font-bold border rounded-md bg-gray-200 hover:bg-gray-300"
-              >
-                +
-              </button>
+              </Counter>
             </div>
             <p className="text-xs mt-1 text-sky-700/80">
               Max gain per Bonus Action: Tier

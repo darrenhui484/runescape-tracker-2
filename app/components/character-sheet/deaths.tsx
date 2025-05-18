@@ -1,21 +1,20 @@
-import { SectionProps, SheetSection } from "./sheet-section";
+import Counter from "../counter";
+import { SheetSection } from "./sheet-section";
 
-interface DeathTallySectionProps {
-  deathTally: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  textInputClasses: string;
+interface DeathsProps {
+  deaths: number;
+  onChange: (newDeaths: number) => void;
 }
-export const DeathTallySection: React.FC<
-  DeathTallySectionProps & Omit<SectionProps, "title" | "children">
-> = ({ deathTally, onChange, textInputClasses, ...rest }) => (
-  <SheetSection title="DEATH TALLY" {...rest}>
-    <input
-      type="number"
-      name="deathTally"
-      value={deathTally}
-      onChange={onChange}
-      className={`${textInputClasses} text-center font-bold text-lg`}
-      min="0"
-    />
+export const Deaths: React.FC<DeathsProps> = ({
+  deaths,
+  onChange,
+}) => (
+  <SheetSection title="DEATHS">
+    <Counter
+      onIncrement={() => onChange(deaths + 1)}
+      onDecrement={() => onChange(deaths - 1)}
+    >
+      {deaths}
+    </Counter>
   </SheetSection>
 );

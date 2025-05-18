@@ -1,22 +1,22 @@
-import { SectionProps, SheetSection } from "./sheet-section";
+import Counter from "../counter";
+import { SheetSection } from "./sheet-section";
 
 interface SideQuestsSectionProps {
   sideQuestsCompletedCount: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  textInputClasses: string;
+  onChange: (newSideQuestsCompletedCount: number) => void;
 }
-export const SideQuestsSection: React.FC<
-  SideQuestsSectionProps & Omit<SectionProps, "title" | "children">
-> = ({ sideQuestsCompletedCount, onChange, textInputClasses, ...rest }) => (
-  <SheetSection title="SIDE QUESTS" {...rest}>
-    <input
-      type="number"
-      name="sideQuestsCompletedCount"
-      value={sideQuestsCompletedCount}
-      onChange={onChange}
-      className={`${textInputClasses} text-center font-bold text-lg`}
-      min="0"
-    />
+export const SideQuestsSection: React.FC<SideQuestsSectionProps> = ({
+  sideQuestsCompletedCount,
+  onChange,
+}) => (
+  <SheetSection title="SIDE QUESTS">
+    <Counter
+      onIncrement={() => onChange(sideQuestsCompletedCount + 1)}
+      onDecrement={() => onChange(sideQuestsCompletedCount - 1)}
+    >
+      {sideQuestsCompletedCount}
+    </Counter>
+
     <h4 className="text-sm font-semibold mt-3 mb-1 text-yellow-900/80 text-center">
       Perks:
     </h4>
