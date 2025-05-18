@@ -165,7 +165,7 @@ export const getDefaultCharacterSheet = (
     thieving: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.THIEVING },
     gathering: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.GATHERING },
     crafting: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.CRAFTING },
-    cooking: { level: 1, xp: 1, iconUrl: EXTERNAL_IMAGES.SKILLS.COOKING },
+    cooking: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.COOKING },
     prayer: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.PRAYER },
     summoning: { level: 1, xp: 0, iconUrl: EXTERNAL_IMAGES.SKILLS.SUMMONING },
     runecrafting: {

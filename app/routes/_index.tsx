@@ -1,13 +1,12 @@
-// app/routes/_index.tsx
-import React, { useState, useEffect } from 'react';
-import EditableCharacterSheet from '~/components/CharacterSheetDisplay'; // Using the editable component
-import type { CharacterSheetData, ClanBankData } from '~/types/character';
+import { useState, useEffect } from "react";
+import EditableCharacterSheet from "~/components/character-sheet/editable-character-sheet";
+import type { CharacterSheetData, ClanBankData } from "~/types/character";
 import {
   getDefaultCharacterSheet,
-  LOCAL_STORAGE_KEY as CHARACTER_SHEET_KEY, // Rename for clarity
+  LOCAL_STORAGE_KEY as CHARACTER_SHEET_KEY,
   getDefaultClanBank,
-  CLAN_BANK_LOCAL_STORAGE_KEY
-} from '~/types/character';
+  CLAN_BANK_LOCAL_STORAGE_KEY,
+} from "~/types/character";
 
 export default function Index() {
   const [sheetData, setSheetData] = useState<CharacterSheetData | null>(null);
@@ -15,7 +14,7 @@ export default function Index() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       // Load Character Sheet
       const savedSheetJson = localStorage.getItem(CHARACTER_SHEET_KEY);
       if (savedSheetJson) {
@@ -30,7 +29,9 @@ export default function Index() {
       }
 
       // Load Clan Bank
-      const savedClanBankJson = localStorage.getItem(CLAN_BANK_LOCAL_STORAGE_KEY);
+      const savedClanBankJson = localStorage.getItem(
+        CLAN_BANK_LOCAL_STORAGE_KEY
+      );
       if (savedClanBankJson) {
         try {
           setClanBankData(JSON.parse(savedClanBankJson) as ClanBankData);
@@ -46,25 +47,40 @@ export default function Index() {
   }, []); // Load once on mount
 
   const handleSaveSheet = (dataToSave: CharacterSheetData) => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
-        const updatedData = { ...dataToSave, lastUpdated: new Date().toISOString() };
+        const updatedData = {
+          ...dataToSave,
+          lastUpdated: new Date().toISOString(),
+        };
         localStorage.setItem(CHARACTER_SHEET_KEY, JSON.stringify(updatedData));
         setSheetData(updatedData); // Update state
-        alert('Character Sheet Saved!');
-      } catch (error) { console.error("Error saving character sheet:", error); alert('Failed to save character sheet.'); }
+        alert("Character Sheet Saved!");
+      } catch (error) {
+        console.error("Error saving character sheet:", error);
+        alert("Failed to save character sheet.");
+      }
     }
   };
 
   const handleSaveClanBank = (dataToSave: ClanBankData) => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
-        const updatedData = { ...dataToSave, lastUpdated: new Date().toISOString() };
-        localStorage.setItem(CLAN_BANK_LOCAL_STORAGE_KEY, JSON.stringify(updatedData));
+        const updatedData = {
+          ...dataToSave,
+          lastUpdated: new Date().toISOString(),
+        };
+        localStorage.setItem(
+          CLAN_BANK_LOCAL_STORAGE_KEY,
+          JSON.stringify(updatedData)
+        );
         setClanBankData(updatedData); // Update state
         // No alert here as it might be too noisy for every bank transaction
-        console.log('Clan Bank Saved!');
-      } catch (error) { console.error("Error saving clan bank:", error); alert('Failed to save clan bank.'); }
+        console.log("Clan Bank Saved!");
+      } catch (error) {
+        console.error("Error saving clan bank:", error);
+        alert("Failed to save clan bank.");
+      }
     }
   };
 
