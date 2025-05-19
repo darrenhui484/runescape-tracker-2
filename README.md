@@ -38,3 +38,7 @@ Make sure to deploy the output of `npm run build`
 ## Styling
 
 This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+
+## Socket.io Admin UI
+
+The Socket.io Admin UI is available at `https://admin.socket.io/`. You can login with `http://localhost:3000` when locally deployed.

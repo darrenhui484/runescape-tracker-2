@@ -1,10 +1,6 @@
-import {
-  CharacterSheetData,
-  getLevel,
-  getRunecraftingTier,
-} from "~/types/character";
+import { CharacterSheetData, getLevel } from "~/types/character";
 import { ClanBankData } from "~/types/character";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CharacterHeader } from "./header";
 import { WoundsSection } from "./wounds";
 import { CapeObjectivesSection } from "./cape-objectives";
@@ -16,38 +12,25 @@ import { SideQuestsSection } from "./side-quests";
 import { StaticInfoSection } from "./static-info";
 import { SkillsSection } from "./skills";
 import { SpecialTokensSection } from "./special-skills";
-import { numberInputClasses, textInputClasses } from "./style";
+import { Socket } from "socket.io-client";
 
 interface EditableCharacterSheetProps {
-  initialData: CharacterSheetData;
-  initialClanBankData: ClanBankData;
-  onSave: (data: CharacterSheetData) => void; // Renamed from onSaveSheet for clarity
-  onSaveClanBank: (data: ClanBankData) => void;
+  socket: Socket;
+  roomId: string;
+  sheet: CharacterSheetData;
+  clanBank: ClanBankData;
+  setSheet: React.Dispatch<React.SetStateAction<CharacterSheetData>>;
+  setClanBank: React.Dispatch<React.SetStateAction<ClanBankData>>;
 }
 
 export default function EditableCharacterSheet({
-  initialData,
-  initialClanBankData,
-  onSave,
-  onSaveClanBank,
+  socket,
+  roomId,
+  sheet,
+  clanBank,
+  setSheet,
+  setClanBank,
 }: EditableCharacterSheetProps) {
-  const [sheet, _setSheet] = useState<CharacterSheetData>(initialData);
-  const setSheet: React.Dispatch<React.SetStateAction<CharacterSheetData>> = (
-    sheetOrFunction:
-      | CharacterSheetData
-      | ((prevSheet: CharacterSheetData) => CharacterSheetData)
-  ) => {
-    _setSheet(sheetOrFunction);
-
-    if (typeof sheetOrFunction === "function") {
-      const updatedSheet = sheetOrFunction(sheet);
-      onSave(updatedSheet);
-    } else {
-      onSave(sheetOrFunction);
-    }
-  };
-  const [clanBank, setClanBank] = useState<ClanBankData>(initialClanBankData);
-
   const maxWounds = sheet.sideQuestsCompletedCount >= 5 ? 4 : 3;
 
   function handleCharacterNameChange(name: string) {
@@ -82,10 +65,7 @@ export default function EditableCharacterSheet({
     }));
   }
 
-  function handleResourceChange(
-    key: keyof CharacterSheetData["resources"],
-    newValue: number
-  ) {
+  function handleResourceChange(key: keyof CharacterSheetData["resources"], newValue: number) {
     if (newValue < 0) return;
 
     setSheet((prev) => {
@@ -102,11 +82,7 @@ export default function EditableCharacterSheet({
           if (resource === "lobster" || resource === "ration") {
             continue;
           }
-          if (
-            newState.resources[
-              resource as keyof CharacterSheetData["resources"]
-            ] === 0
-          ) {
+          if (newState.resources[resource as keyof CharacterSheetData["resources"]] === 0) {
             oneOfEachResource = false;
             break;
           }
@@ -123,10 +99,7 @@ export default function EditableCharacterSheet({
     });
   }
 
-  const handleSkillXpChange = (
-    skillName: keyof CharacterSheetData["skills"],
-    newXp: number
-  ) => {
+  const handleSkillXpChange = (skillName: keyof CharacterSheetData["skills"], newXp: number) => {
     setSheet((prev) => {
       let newAvailableSummoningTokens = prev.availableSummoningTokens;
       if (skillName === "summoning") {
@@ -140,33 +113,23 @@ export default function EditableCharacterSheet({
           newAvailableSummoningTokens = maxTokensForNewLevel;
         }
 
-        newAvailableSummoningTokens = Math.min(
-          newAvailableSummoningTokens,
-          maxTokensForNewLevel
-        );
+        newAvailableSummoningTokens = Math.min(newAvailableSummoningTokens, maxTokensForNewLevel);
       }
 
       // If prayer level changed, re-evaluate token availability
       let newPrayerTokens = { ...prev.prayerTokens };
       if (skillName === "prayer") {
         let newLevel = getLevel(newXp);
-        if (newLevel >= 1 && newPrayerTokens.slot1 === "unavailable")
-          newPrayerTokens.slot1 = "inactive";
-        if (newLevel >= 4 && newPrayerTokens.slot2 === "unavailable")
-          newPrayerTokens.slot2 = "inactive";
-        if (newLevel >= 7 && newPrayerTokens.slot3 === "unavailable")
-          newPrayerTokens.slot3 = "inactive";
+        if (newLevel >= 1 && newPrayerTokens.slot1 === "unavailable") newPrayerTokens.slot1 = "inactive";
+        if (newLevel >= 4 && newPrayerTokens.slot2 === "unavailable") newPrayerTokens.slot2 = "inactive";
+        if (newLevel >= 7 && newPrayerTokens.slot3 === "unavailable") newPrayerTokens.slot3 = "inactive";
 
-        if (newLevel < 7 && newPrayerTokens.slot3 !== "unavailable")
-          newPrayerTokens.slot3 = "unavailable";
-        if (newLevel < 4 && newPrayerTokens.slot2 !== "unavailable")
-          newPrayerTokens.slot2 = "unavailable";
-        if (newLevel < 1 && newPrayerTokens.slot1 !== "unavailable")
-          newPrayerTokens.slot1 = "unavailable"; // Though level usually min 1
+        if (newLevel < 7 && newPrayerTokens.slot3 !== "unavailable") newPrayerTokens.slot3 = "unavailable";
+        if (newLevel < 4 && newPrayerTokens.slot2 !== "unavailable") newPrayerTokens.slot2 = "unavailable";
+        if (newLevel < 1 && newPrayerTokens.slot1 !== "unavailable") newPrayerTokens.slot1 = "unavailable"; // Though level usually min 1
       }
 
-      const level8InAnySkill =
-        prev.capeObjectives.level8InAnySkill || getLevel(newXp) >= 8;
+      const level8InAnySkill = prev.capeObjectives.level8InAnySkill || getLevel(newXp) >= 8;
 
       const newState = {
         ...prev,
@@ -183,8 +146,7 @@ export default function EditableCharacterSheet({
         // Check if 8 skills are level 3 or higher
         let skillsGreaterThan3Count = 0;
         for (const skill of Object.keys(newState.skills)) {
-          const skillXp =
-            newState.skills[skill as keyof CharacterSheetData["skills"]];
+          const skillXp = newState.skills[skill as keyof CharacterSheetData["skills"]];
           if (getLevel(skillXp) >= 3) {
             skillsGreaterThan3Count++;
             if (skillsGreaterThan3Count >= 8) {
@@ -212,29 +174,23 @@ export default function EditableCharacterSheet({
     setSheet((prev) => ({ ...prev, wounds: newWounds }));
   }
 
-  // --- Handlers for Clan Bank ---
-  function handleClanBankResourceChange(
-    resourceName: keyof ClanBankData["resources"],
-    change: number // Can be positive (deposit) or negative (withdraw)
-  ) {
+  function handleClanBankResourceChange(resourceName: keyof ClanBankData["resources"], newValue: number) {
+    if (newValue < 0) return;
     setClanBank((prevBank) => {
-      const currentAmount = prevBank.resources[resourceName] || 0;
-      const newAmount = Math.max(0, currentAmount + change); // Ensure not negative
-      const updatedResources = {
-        ...prevBank.resources,
-        [resourceName]: newAmount,
+      const newBank = {
+        ...prevBank,
+        resources: {
+          ...prevBank.resources,
+          [resourceName]: newValue,
+        },
       };
-      const updatedBank = { ...prevBank, resources: updatedResources };
-      // Immediately call onSaveClanBank to persist the change
-      onSaveClanBank(updatedBank);
-      return updatedBank; // Update local state
+      console.log(roomId);
+      socket.emit("bank-change", roomId, newBank);
+      return newBank;
     });
   }
 
-  // --- Handlers for moving items between Character and Clan Bank ---
-  function moveResourceToBank(
-    resourceName: keyof CharacterSheetData["resources"]
-  ) {
+  function moveResourceToBank(resourceName: keyof CharacterSheetData["resources"]) {
     const characterAmount = sheet.resources[resourceName];
     if (characterAmount < 0) {
       throw new Error("Illegal State: Character resource count is negative");
@@ -243,7 +199,6 @@ export default function EditableCharacterSheet({
       return;
     }
 
-    // Decrease character resource
     setSheet((prevSheet) => ({
       ...prevSheet,
       resources: {
@@ -251,15 +206,10 @@ export default function EditableCharacterSheet({
         [resourceName]: characterAmount - 1,
       },
     }));
-    // Increase clan bank resource
-    handleClanBankResourceChange(resourceName, 1);
-    // Note: onSaveSheet will be called when the main "Save Character" is clicked.
-    // onSaveClanBank is called immediately by handleClanBankResourceChange.
+    handleClanBankResourceChange(resourceName, clanBank.resources[resourceName] + 1);
   }
 
-  function moveResourceFromBank(
-    resourceName: keyof CharacterSheetData["resources"]
-  ) {
+  function moveResourceFromBank(resourceName: keyof CharacterSheetData["resources"]) {
     const bankAmount = clanBank.resources[resourceName];
     if (bankAmount < 0) {
       throw new Error("Illegal State: Clan bank resource count is negative");
@@ -268,9 +218,7 @@ export default function EditableCharacterSheet({
       return;
     }
 
-    // Decrease clan bank resource
-    handleClanBankResourceChange(resourceName, -1);
-    // Increase character resource
+    handleClanBankResourceChange(resourceName, clanBank.resources[resourceName] - 1);
     setSheet((prevSheet) => {
       const currentCharacterAmount = prevSheet.resources[resourceName];
       return {
@@ -283,9 +231,7 @@ export default function EditableCharacterSheet({
     });
   }
 
-  function handlePrayerTokenClick(
-    slot: keyof CharacterSheetData["prayerTokens"]
-  ) {
+  function handlePrayerTokenClick(slot: keyof CharacterSheetData["prayerTokens"]) {
     setSheet((prev) => {
       const currentStatus = prev.prayerTokens[slot];
       if (currentStatus === "unavailable") return prev; // Should not happen if button is disabled
@@ -318,42 +264,27 @@ export default function EditableCharacterSheet({
 
   return (
     <form className="font-[custom-serif] bg-yellow-100 border-[5px] border-yellow-800 p-3 sm:p-5 max-w-5xl mx-auto my-6 shadow-2xl text-yellow-950/90 text-sm sm:text-base">
-      <CharacterHeader
-        characterName={sheet.characterName}
-        onChange={handleCharacterNameChange}
-      />
+      <CharacterHeader characterName={sheet.characterName} onChange={handleCharacterNameChange} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
         {/* Col 1 */}
         <div className="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
-          <WoundsSection
-            wounds={sheet.wounds}
-            maxWounds={maxWounds}
-            onWoundClick={handleWoundClick}
-          />
+          <WoundsSection wounds={sheet.wounds} maxWounds={maxWounds} onWoundClick={handleWoundClick} />
           <CapeObjectivesSection capeObjectives={sheet.capeObjectives} />
           <CharacterResourcesSection
             resources={sheet.resources}
-            onResourceChange={(key, value) => handleResourceChange(key, value)}
+            onResourceChange={handleResourceChange}
             onMoveToBank={moveResourceToBank}
           />
-          <GPSection
-            gp={sheet.gp}
-            onGPChange={(newGp) => handleGpChange(newGp)}
-          />
+          <GPSection gp={sheet.gp} onGPChange={(newGp) => handleGpChange(newGp)} />
         </div>
 
         {/* Col 2 */}
         <div className="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
-          <Deaths
-            deaths={sheet.deaths}
-            onChange={(newDeaths) => handleIntChange(newDeaths, "deaths")}
-          />
+          <Deaths deaths={sheet.deaths} onChange={(newDeaths) => handleIntChange(newDeaths, "deaths")} />
           <SideQuestsSection
             sideQuestsCompletedCount={sheet.sideQuestsCompletedCount}
-            onChange={(newSideQuestsCompletedCount) =>
-              handleSideQuestChange(newSideQuestsCompletedCount)
-            }
+            onChange={(newSideQuestsCompletedCount) => handleSideQuestChange(newSideQuestsCompletedCount)}
           />
           <ClanBankSection
             clanBankResources={clanBank.resources}
@@ -363,10 +294,7 @@ export default function EditableCharacterSheet({
         </div>
 
         {/* Col 3 */}
-        <SkillsSection
-          skills={sheet.skills}
-          onSkillXpChange={handleSkillXpChange}
-        />
+        <SkillsSection skills={sheet.skills} onSkillXpChange={handleSkillXpChange} />
 
         {/* Col 4 */}
         <div className="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
@@ -379,9 +307,7 @@ export default function EditableCharacterSheet({
             // The number of tokens they can *place* on a spell is tier (1, 2, or 3).
             // The number they can *gain* from the bonus action is tier.
             // The number they can *hold* is not explicitly limited in rules shown
-            onAdjustRuneTokens={(change) =>
-              handleIntChange(change, "availableRuneTokens")
-            }
+            onAdjustRuneTokens={(change) => handleIntChange(change, "availableRuneTokens")}
           />
           <StaticInfoSection />
         </div>

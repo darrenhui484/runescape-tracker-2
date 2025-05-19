@@ -10,7 +10,7 @@ interface ClanBankSectionProps {
   clanBankResources: ClanBankData["resources"];
   onResourceChange: (
     key: keyof ClanBankData["resources"],
-    change: number
+    newValue: number
   ) => void;
   onMoveFromBank: (key: keyof ClanBankData["resources"]) => void;
 }
@@ -49,8 +49,8 @@ export const ClanBankSection: React.FC<ClanBankSectionProps> = ({
               👤←
             </button>
             <Counter
-              onIncrement={() => onResourceChange(key, 1)}
-              onDecrement={() => onResourceChange(key, -1)}
+              onIncrement={() => onResourceChange(key, clanBankResources[key] + 1)}
+              onDecrement={() => onResourceChange(key, clanBankResources[key] - 1)}
             >
               {clanBankResources[key]}
             </Counter>

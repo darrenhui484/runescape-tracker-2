@@ -5,22 +5,33 @@
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
-    "dev": "remix vite:dev",
+    "dev": "tsx ./server.ts",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-    "start": "remix-serve ./build/server/index.js",
+    "start": "cross-env NODE_ENV=production node ./server.js",
     "typecheck": "tsc"
   },
   "dependencies": {
     "@remix-run/node": "^2.16.6",
     "@remix-run/react": "^2.16.6",
     "@remix-run/serve": "^2.16.6",
+    "@socket.io/admin-ui": "^0.5.1",
+    "compression": "^1.8.0",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.5.0",
+    "express": "^4.21.2",
     "isbot": "^4.1.0",
+    "mongodb": "^6.16.0",
+    "morgan": "^1.10.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.16.6",
+    "@types/compression": "^1.7.5",
+    "@types/express": "^5.0.2",
+    "@types/morgan": "^1.9.9",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
@@ -34,6 +45,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
+    "tsx": "^4.19.4",
     "typescript": "^5.1.6",
     "vite": "^6.0.0",
     "vite-tsconfig-paths": "^4.2.1"
