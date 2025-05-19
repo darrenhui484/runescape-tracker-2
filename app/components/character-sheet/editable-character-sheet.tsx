@@ -184,7 +184,6 @@ export default function EditableCharacterSheet({
           [resourceName]: newValue,
         },
       };
-      console.log(roomId);
       socket.emit("bank-change", roomId, newBank);
       return newBank;
     });

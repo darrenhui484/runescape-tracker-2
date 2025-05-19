@@ -31,7 +31,6 @@ export default function Index() {
     const socket = io();
     socket.emit("join", roomId, username);
     socket.on("bank-change", (bankResources) => {
-      console.log("bank-change", bankResources)
       setClanBankData(bankResources);
     });
     setSocket(socket);
@@ -72,7 +71,6 @@ export default function Index() {
     } else {
       updatedData = saveToLocalStorage(clanBankOrFunction, CLAN_BANK_LOCAL_STORAGE_KEY);
     }
-    console.log("setClanBankData", updatedData.resources);
     _setClanBankData(updatedData);
   }
 
@@ -86,24 +84,16 @@ export default function Index() {
 
   return (
     <main className="min-h-screen bg-gray-100 py-6">
-      <button
-        className="bg-red-500 text-white px-4 py-2 rounded"
-        onClick={() => {
-          localStorage.clear();
-          setSheetData(getDefaultCharacterSheet());
-          setClanBankData(getDefaultClanBank());
-        }}
-      >
-        Clear data
-      </button>
-      <EditableCharacterSheet
-        socket={socket}
-        roomId={roomId}
-        sheet={sheetData}
-        clanBank={clanBankData}
-        setSheet={setSheetData}
-        setClanBank={setClanBankData}
-      />
+      <div>
+        <EditableCharacterSheet
+          socket={socket}
+          roomId={roomId}
+          sheet={sheetData}
+          clanBank={clanBankData}
+          setSheet={setSheetData}
+          setClanBank={setClanBankData}
+        />
+      </div>
     </main>
   );
 }
